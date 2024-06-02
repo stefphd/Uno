@@ -4,6 +4,7 @@
 #include "ConstraintRelaxationStrategyFactory.hpp"
 #include "FeasibilityRestoration.hpp"
 #include "l1Relaxation.hpp"
+#include "SQuIDl1Relaxation.hpp"
 #include "tools/Options.hpp"
 
 std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const Model& model, const Options& options) {
@@ -11,8 +12,11 @@ std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactor
    if (constraint_relaxation_type == "feasibility_restoration") {
       return std::make_unique<FeasibilityRestoration>(model, options);
    }
-   else if (constraint_relaxation_type == "l1_relaxation") {
+   else if (constraint_relaxation_type == "byrd_l1_relaxation") {
       return std::make_unique<l1Relaxation>(model, options);
+   }
+   else if (constraint_relaxation_type == "squid_l1_relaxation") {
+      return std::make_unique<SQuIDl1Relaxation>(model, options);
    }
    throw std::invalid_argument("ConstraintRelaxationStrategy " + constraint_relaxation_type + " is not supported");
 }
