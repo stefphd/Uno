@@ -304,7 +304,7 @@ void Byrdl1Relaxation::check_exact_relaxation(Iterate& iterate) const {
 
 void Byrdl1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
    statistics.set("complementarity", iterate.residuals.complementarity);
-   statistics.set("stationarity", iterate.residuals.stationarity);
+   statistics.set("stationarity", iterate.residuals.KKT_stationarity);
 }
 
 size_t Byrdl1Relaxation::get_hessian_evaluation_count() const {

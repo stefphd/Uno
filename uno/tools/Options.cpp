@@ -163,6 +163,9 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["tolerance"] = "1e-6";
       options["loose_tolerance"] = "1e-6";
    }
+   else {
+      throw std::runtime_error("The preset " + preset_name + " is unknown.");
+   }
 }
 
 void get_command_line_arguments(int argc, char* argv[], Options& options) {
