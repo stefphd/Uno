@@ -47,17 +47,18 @@ double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction_m
 std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
       const Vector<double>& primal_direction, double step_length, const SymmetricMatrix<double>& hessian) const {
    // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
-   /*
+
    const double directional_derivative = dot(primal_direction, current_iterate.evaluations.objective_gradient);
    const double quadratic_term = hessian.quadratic_product(primal_direction, primal_direction);
    return [=](double objective_multiplier) {
       return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
    };
-   */
+   /*
    const double directional_derivative = dot(primal_direction, current_iterate.evaluations.objective_gradient);
    return [=](double objective_multiplier) {
       return step_length * objective_multiplier * -directional_derivative;
    };
+    */
 }
 
 void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem,
@@ -66,10 +67,14 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
    iterate.evaluate_constraints(this->model);
    iterate.evaluate_constraint_jacobian(this->model);
 
-   // stationarity error
+   // stationarity errors:
+   // - with standard multipliers and current objective multiplier (for KKT conditions)
+   // - with standard multipliers and 0 objective multiplier (for FJ conditions)
+   // - with feasibility multipliers and 0 objective multiplier (for feasibility problem)
    this->evaluate_lagrangian_gradient(iterate, iterate.multipliers);
    iterate.residuals.stationarity = optimality_problem.stationarity_error(iterate.lagrangian_gradient, iterate.objective_multiplier,
          this->residual_norm);
+   iterate.residuals.FJ_stationarity = optimality_problem.stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
    this->evaluate_lagrangian_gradient(iterate, iterate.feasibility_multipliers);
    iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
 

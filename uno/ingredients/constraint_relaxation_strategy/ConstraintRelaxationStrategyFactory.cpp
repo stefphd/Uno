@@ -12,7 +12,7 @@ std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactor
    if (constraint_relaxation_type == "feasibility_restoration") {
       return std::make_unique<FeasibilityRestoration>(model, options);
    }
-   else if (constraint_relaxation_type == "byrd_l1_relaxation") {
+   else if (constraint_relaxation_type == "l1_relaxation") {
       return std::make_unique<l1Relaxation>(model, options);
    }
    else if (constraint_relaxation_type == "squid_l1_relaxation") {
