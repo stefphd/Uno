@@ -10,7 +10,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
 
-struct l1RelaxationParameters {
+struct Byrdl1RelaxationParameters {
    bool fixed_parameter;
    double decrease_factor;
    double epsilon1;
@@ -18,9 +18,9 @@ struct l1RelaxationParameters {
    double residual_small_threshold;
 };
 
-class l1Relaxation : public ConstraintRelaxationStrategy {
+class Byrdl1Relaxation : public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(const Model& model, const Options& options);
+   Byrdl1Relaxation(const Model& model, const Options& options);
 
    void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
    void set_trust_region_radius(double trust_region_radius) override;
@@ -51,7 +51,7 @@ protected:
    const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
    const double tolerance;
-   const l1RelaxationParameters parameters;
+   const Byrdl1RelaxationParameters parameters;
    const double small_duals_threshold;
    // preallocated temporary multipliers
    Multipliers trial_multipliers;

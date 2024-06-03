@@ -120,7 +120,7 @@ void Uno::print_uno_version() {
    std::cout << "Welcome in Uno 1.0\n";
    std::cout << "To solve an AMPL model, type ./uno_ampl path_to_file/file.nl\n";
    std::cout << "To choose a constraint relaxation strategy, use the argument -constraint_relaxation_strategy "
-                "[feasibility_restoration|l1_relaxation]\n";
+                "[feasibility_restoration|byrd_l1_relaxation|squid_l1_relaxation]\n";
    std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|primal_dual_interior_point]\n";
    std::cout << "To choose a globalization mechanism, use the argument -globalization_mechanism [LS|TR]\n";
    std::cout << "To choose a globalization strategy, use the argument -globalization_strategy "
