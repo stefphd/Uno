@@ -21,7 +21,7 @@ _uno_ampl_completions()
             return 0
             ;;
         -constraint_relaxation_strategy)
-			local constraint_relaxation_strategies="feasibility_restoration byrd_l1_relaxation"
+			local constraint_relaxation_strategies="feasibility_restoration byrd_l1_relaxation squid_l1_relaxation"
             COMPREPLY=( $(compgen -W "${constraint_relaxation_strategies}" -- ${cur}) )
             return 0
             ;;
