@@ -159,6 +159,9 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["sparse_format"] = "CSC";
       options["LS_scale_duals_with_step_length"] = "no";
       options["protect_actual_reduction_against_roundoff"] = "no";
+      options["scale_functions"] = "yes";
+      options["tolerance"] = "1e-6";
+      options["loose_tolerance"] = "1e-6";
    }
 }
 

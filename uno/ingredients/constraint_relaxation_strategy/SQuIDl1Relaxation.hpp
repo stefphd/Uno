@@ -18,15 +18,6 @@ struct Squidl1RelaxationParameters {
    double epsilon;
    double omega;
    double delta;
-   double eta;
-   double g_max;
-   double gamma;
-   double rho_bar;
-   double gamma_bar;
-   double xi;
-   double mu0;
-   double psi;
-   double mu_min;
 };
 
 class SQuIDl1Relaxation : public ConstraintRelaxationStrategy {

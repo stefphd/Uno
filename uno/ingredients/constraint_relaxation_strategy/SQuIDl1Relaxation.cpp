@@ -65,7 +65,7 @@ double SQuIDl1Relaxation::Rinf(Iterate& current_iterate, const Multipliers& mult
 
 // m: predicted reduction of the l1 merit function
 double SQuIDl1Relaxation::delta_m(const Direction& direction, const Iterate& current_iterate, double objective_multiplier) const {
-   return -objective_multiplier*dot(direction.primals, current_iterate.evaluations.objective_gradient) + this->delta_l(direction, current_iterate);
+   return -objective_multiplier * dot(direction.primals, current_iterate.evaluations.objective_gradient) + this->delta_l(direction, current_iterate);
 }
 
 double SQuIDl1Relaxation::compute_w(const Direction& feasibility_direction, const Direction& optimality_direction, const Iterate& current_iterate) {
@@ -141,16 +141,7 @@ SQuIDl1Relaxation::SQuIDl1Relaxation(const Model& model, const Options& options)
          10., /* kappa_lambda */
          1e-2, /* epsilon */
          1.-1e-18, /* omega */
-         0.5, /* delta */
-         1e-8, /* eta */
-         100., /* g_max */
-         1e-6, /* gamma */
-         1e-8, /* rho_bar */
-         1e-8, /* gamma_bar */
-         2., /* xi */
-         1e-4, /* mu0 */
-         0.1, /* psi */
-         1e-4 /* mu_min */
+         0.5 /* delta */
       }) {
 }
 
