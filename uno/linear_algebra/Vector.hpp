@@ -22,9 +22,19 @@ public:
    explicit Vector(size_t capacity = 0): vector(capacity) { }
    explicit Vector(size_t capacity, ElementType value): vector(capacity, value) { }
    Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
+   Vector(const Vector& other) noexcept : vector(other.vector) { }
+   Vector(Vector&& other) noexcept : vector(std::move(other.vector)) { }
    ~Vector() = default;
 
    // copy assignment operator
+   Vector& operator=(const Vector& other) {
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] = other[index];
+      }
+      return *this;
+   }
+
+   // assignment operator from an expression
    template <typename Expression>
    Vector& operator=(const Expression& expression) {
       static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
@@ -35,11 +45,10 @@ public:
    }
 
    // move assignment operator
-   Vector& operator=(std::vector<ElementType>&& other) {
-      if (&other == this) {
-         return *this;
+   Vector& operator=(Vector&& other) noexcept {
+      if (&other != this) {
+         this->vector = std::move(other.vector);
       }
-      this->vector = std::move(other.vector);
       return *this;
    }
 
@@ -61,6 +70,12 @@ public:
    void fill(ElementType value) {
       for (size_t index = 0; index < this->size(); index++) {
          this->vector[index] = value;
+      }
+   }
+
+   void scale(ElementType factor) {
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] *= factor;
       }
    }
 
@@ -88,8 +103,8 @@ protected:
 
 // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)
 template <typename Array, typename Stream>
-void print_vector(Stream&& stream, const Array& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
-   for (size_t index: Range(start, std::min(start + length, x.size()))) {
+void print_vector(Stream&& stream, const Array& x) {
+   for (size_t index: Range(x.size())) {
       stream << x[index] << " ";
    }
    stream << '\n';
