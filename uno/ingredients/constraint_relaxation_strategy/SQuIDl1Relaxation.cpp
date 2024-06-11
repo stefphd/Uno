@@ -45,8 +45,7 @@ double SQuIDl1Relaxation::Ropt(Iterate& current_iterate, double objective_multip
    double error = norm_inf(scaled_lagrangian);
 
    // complementarity error
-   error += this->l1_relaxed_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
-         multipliers, Norm::INF);
+   error += this->l1_relaxed_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints, multipliers, Norm::INF);
    return error;
 }
 
@@ -58,8 +57,7 @@ double SQuIDl1Relaxation::Rinf(Iterate& current_iterate, const Multipliers& mult
    double error = norm_inf(scaled_lagrangian);
 
    // complementarity error
-   error += this->feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
-         multipliers, Norm::INF);
+   error += this->feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints, multipliers, Norm::INF);
    return error;
 }
 
@@ -223,7 +221,7 @@ void SQuIDl1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
    DEBUG2 << "Feasibility direction: "; print_vector(DEBUG2, view(feasibility_direction.primals, 0, this->model.number_variables));
    DEBUG2 << "Optimality direction:  "; print_vector(DEBUG2, view(optimality_direction.primals, 0, this->model.number_variables));
    const double w = this->compute_w(feasibility_direction, optimality_direction, current_iterate);
-   const auto interpolated_direction = view(w * feasibility_direction.primals + (1 - w) * optimality_direction.primals, 0, this->model.number_variables);
+   const auto interpolated_direction = w * feasibility_direction.primals + (1 - w) * optimality_direction.primals;
    for (size_t variable_index: Range(direction.number_variables)) {
       direction.primals[variable_index] = interpolated_direction[variable_index];
    }
