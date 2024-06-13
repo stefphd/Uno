@@ -198,12 +198,13 @@ void SQuIDl1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
       const double alpha = std::min(1., this->parameters.kappa_lambda * feasibility_dual_error * feasibility_dual_error / multipliers_distance);
       current_iterate.multipliers.constraints = alpha * current_iterate.multipliers.constraints +
             (1. - alpha) * current_iterate.feasibility_multipliers.constraints;
+      DEBUG2 << "Updated multipliers: " << current_iterate.multipliers.constraints << '\n';
    }
 
    // solve l1 relaxed problem
    DEBUG << "\nSolving the regular l1 relaxed problem\n";
    this->l1_relaxed_problem.set_objective_multiplier(this->penalty_parameter);
-   this->subproblem->set_initial_point(feasibility_direction.primals);
+   //this->subproblem->set_initial_point(feasibility_direction.primals);
    warmstart_information.only_objective_changed();
    Direction optimality_direction(direction.number_variables, direction.number_constraints);
    this->solve_subproblem(statistics, this->l1_relaxed_problem, current_iterate, current_iterate.multipliers, optimality_direction,
