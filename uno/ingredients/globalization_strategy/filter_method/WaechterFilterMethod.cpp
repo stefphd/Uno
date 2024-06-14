@@ -4,11 +4,13 @@
 #include "WaechterFilterMethod.hpp"
 #include "../ProgressMeasures.hpp"
 #include "optimization/Iterate.hpp"
-#include "tools/Statistics.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 WaechterFilterMethod::WaechterFilterMethod(const Options& options):
-      FilterMethod(options) {
+      FilterMethod(options),
+      sufficient_infeasibility_decrease_factor(options.get_double("filter_sufficient_infeasibility_decrease_factor")) {
 }
 
 void WaechterFilterMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
@@ -100,9 +102,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
    return accept;
 }
 
-bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const {
-   // TODO put constant in the option file
-   // TODO current_progress.infeasibility should be replaced with the infeasibility of the first feasibility restoration iterate
-   return trial_progress.infeasibility <= 0.9 * current_progress.infeasibility &&
+bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const {
+   return trial_progress.infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_progress.infeasibility &&
       this->filter->acceptable(trial_progress.infeasibility, FilterMethod::unconstrained_merit_function(trial_progress));
 }

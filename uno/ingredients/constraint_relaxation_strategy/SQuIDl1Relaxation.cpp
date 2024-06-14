@@ -121,15 +121,25 @@ double SQuIDl1Relaxation::compute_zeta(const Direction& direction, const Iterate
 // SQuID code
 
 SQuIDl1Relaxation::SQuIDl1Relaxation(const Model& model, const Options& options) :
-      ConstraintRelaxationStrategy(model, options),
-      // create the l1 feasibility problem (objective multiplier = 0)
-      feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
-      // create the l1 relaxed problem
-      l1_relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
-      subproblem(SubproblemFactory::create(this->l1_relaxed_problem.number_variables, this->l1_relaxed_problem.number_constraints,
-            this->l1_relaxed_problem.number_objective_gradient_nonzeros(), this->l1_relaxed_problem.number_jacobian_nonzeros(),
-            this->l1_relaxed_problem.number_hessian_nonzeros(), options)),
-      globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
+      // call delegating constructor
+      SQuIDl1Relaxation(model,
+            // create the l1 feasibility problem (objective multiplier = 0)
+            l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
+            // create the l1 relaxed problem
+            l1RelaxedProblem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
+            options) {
+}
+
+// private delegating constructor
+SQuIDl1Relaxation::SQuIDl1Relaxation(const Model& model, l1RelaxedProblem&& feasibility_problem, l1RelaxedProblem&& l1_relaxed_problem,
+         const Options& options) :
+      ConstraintRelaxationStrategy(model,
+            l1_relaxed_problem.number_variables, l1_relaxed_problem.number_constraints,
+            l1_relaxed_problem.number_objective_gradient_nonzeros(), l1_relaxed_problem.number_jacobian_nonzeros(),
+            l1_relaxed_problem.number_hessian_nonzeros(),
+            options),
+      feasibility_problem(std::forward<l1RelaxedProblem>(feasibility_problem)),
+      l1_relaxed_problem(std::forward<l1RelaxedProblem>(l1_relaxed_problem)),
       penalty_parameter(0.1),
       tolerance(options.get_double("tolerance")),
       parameters({
@@ -251,13 +261,6 @@ void SQuIDl1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
    direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
 }
 
-// an initial point is provided
-void SQuIDl1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-      const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
-   this->subproblem->set_initial_point(initial_point);
-   this->compute_feasible_direction(statistics, current_iterate, direction, warmstart_information);
-}
-
 bool SQuIDl1Relaxation::solving_feasibility_problem() const {
    return (this->penalty_parameter == 0.);
 }
@@ -277,22 +280,11 @@ void SQuIDl1Relaxation::solve_subproblem(Statistics& statistics, const Optimizat
    assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
 }
 
-void SQuIDl1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& /*direction*/, double /*step_length*/) {
-   if (this->subproblem->subproblem_definition_changed) {
-      DEBUG << "The subproblem definition changed\n";
-      this->globalization_strategy->reset();
-      this->subproblem->subproblem_definition_changed = false;
-   }
-   this->evaluate_progress_measures(current_iterate);
-   this->evaluate_progress_measures(trial_iterate);
-
-   trial_iterate.objective_multiplier = this->l1_relaxed_problem.get_objective_multiplier();
-}
-
 bool SQuIDl1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
       double step_length) {
    this->subproblem->postprocess_iterate(this->l1_relaxed_problem, trial_iterate);
-   this->compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
+   this->compute_progress_measures(current_iterate, trial_iterate);
+   trial_iterate.objective_multiplier = this->l1_relaxed_problem.get_objective_multiplier();
 
    bool accept_iterate = false;
    if (direction.norm == 0.) {
@@ -334,10 +326,6 @@ ProgressMeasures SQuIDl1Relaxation::compute_predicted_reduction_models(Iterate& 
    };
 }
 
-void SQuIDl1Relaxation::set_trust_region_radius(double trust_region_radius) {
-   this->subproblem->set_trust_region_radius(trust_region_radius);
-}
-
 size_t SQuIDl1Relaxation::maximum_number_variables() const {
    return this->l1_relaxed_problem.number_variables;
 }
@@ -357,12 +345,4 @@ void SQuIDl1Relaxation::check_exact_relaxation(Iterate& iterate) const {
 void SQuIDl1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
    statistics.set("complementarity", iterate.residuals.complementarity);
    statistics.set("stationarity", iterate.residuals.KKT_stationarity);
-}
-
-size_t SQuIDl1Relaxation::get_hessian_evaluation_count() const {
-   return this->subproblem->get_hessian_evaluation_count();
-}
-
-size_t SQuIDl1Relaxation::get_number_subproblems_solved() const {
-   return this->subproblem->number_subproblems_solved;
 }
