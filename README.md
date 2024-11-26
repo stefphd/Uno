@@ -16,11 +16,12 @@ $$
 \end{align}
 $$
 
-The theoretical abstract framework for unifying nonlinearly constrained nonconvex optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).  
+The theoretical abstract framework for unifying nonlinearly constrained nonconvex optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory). Uno was designed and implemented by Charlie Vanaret. It is released under the MIT license (see the [license file](LICENSE)).
 
-Uno was designed and implemented by Charlie Vanaret. [Silvio Traversaro](https://github.com/traversaro) contributed to the CMakeLists.
+The contributors are (in alphabetical order):
+Oscar Dowson [@odow](https://github.com/odow), David Kiessling [@david0oo](https://github.com/david0oo), Alexis Montoison [@amontoison](https://github.com/amontoison), Manuel Schaich [@worc4021](https://github.com/worc4021), Silvio Traversaro [@traversaro](https://github.com/traversaro).
 
-Uno is released under the MIT license (see the [license file](LICENSE)).
+![Unit tests on Ubuntu workflow](https://github.com/cvanaret/Uno/actions/workflows/unit-tests-ubuntu.yml/badge.svg)
 
 ## Unifying nonlinearly constrained nonconvex optimization
 
@@ -36,28 +37,28 @@ The following hypergraph illustrates how some of the state-of-the-art solvers ca
    <img src="docs/figures/combination_hypergraph.png" alt="Combination hypergraph" width="75%" />
 </p>
 
-## Uno 1.0
+## Uno
 -->
 
-Uno 1.0 implements the following strategies:
+Uno implements the following strategies:
 <p align="center">
-   <img src="docs/figures/hypergraph_uno.png" alt="Uno 1.0 hypergraph" width="65%" />
+   <img src="docs/figures/hypergraph_uno.png" alt="Uno hypergraph" width="65%" />
 </p>
 
-**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
+**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization) or my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 
-Uno 1.0 implements three **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
+Uno implements **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method);
 * `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method).
 
-## Latest results (April 27, 2023)
+## Latest results (September 26, 2024)
 
 Some of Uno combinations that correspond to existing solvers (called presets, see below) have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
 The figure below is a performance profile of Uno and state-of-the-art solvers filterSQP, IPOPT, SNOPT, MINOS, LANCELOT, LOQO and CONOPT; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
 
 <p align="center">
-   <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno 1.0" width="75%" />
+   <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno" width="75%" />
 </p>
 
 All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_comparison).
@@ -66,7 +67,18 @@ All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_c
 
 ### In an article
 
-Please be patient, we are actively working on our article.
+We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization).
+
+Until it is published, you can use the following bibtex entry:
+
+```
+@unpublished{VanaretLeyffer2024,
+  author = {Vanaret, Charlie and Leyffer, Sven},
+  title = {Unifying nonlinearly constrained nonconvex optimization},
+  year = {2024},
+  note = {Submitted to Mathematical Programming Computation}
+}
+```
 
 ### On social media
 
@@ -79,17 +91,28 @@ See the [INSTALL](INSTALL.md) file.
 
 ## Solving a problem with Uno
 
-To solve an AMPL model, type in the `build` directory: ```./uno_ampl path_to_file/file.nl```
+### Controlling Uno via options
+
+Options can be set in three different ways (with decreasing precedence):
+- passing an option file (`option_file=file`) that contains `option value` on each line;
+- setting a preset that mimics an existing solver (`preset=[filtersqp|ipopt|byrd]`);
+- setting individual options (see the [default options](https://github.com/cvanaret/Uno/blob/main/uno/options/DefaultOptions.cpp)).
+
+### Interfaces
+
+#### AMPL/nl files
+To solve an AMPL model in the [.nl format](https://en.wikipedia.org/wiki/Nl_(format)), type in the `build` directory: ```./uno_ampl model.nl -AMPL [option=value ...]```  
+where ```[option=value ...]``` is a list of options separated by spaces. 
+
 A couple of CUTEst instances are available in the `/examples` directory.
 
-### Combination of ingredients
+#### Julia
+Uno can be installed in Julia via [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) and used via [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl). An example can be found [here](https://discourse.julialang.org/t/the-uno-unifying-nonconvex-optimization-solver/115883/15?u=cvanaret).
 
-To pick a globalization mechanism, use the argument (choose one of the possible options in brackets): ```-globalization_mechanism [LS|TR]```  
-To pick a constraint relaxation strategy, use the argument: ```-constraint_relaxation_strategy [feasibility_restoration|l1_relaxation]```  
-To pick a globalization strategy, use the argument: ```-globalization_strategy [l1_merit|fletcher_filter_strategy|waechter_filter_strategy]```  
-To pick a subproblem method, use the argument: ```-subproblem [QP|LP|primal_dual_interior_point]```  
-The options can be combined in the same command line.
+### Combining strategies on the fly
 
-For an overview of the available strategies, type: ```./uno_ampl --strategies```
-
-To pick a preset, use the argument: ```-preset [filtersqp|ipopt|byrd]```
+For an overview of the available strategies, type: ```./uno_ampl --strategies```:
+- to pick a globalization mechanism, use the argument : ```globalization_mechanism=[LS|TR]```  
+- to pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration|byrd_l1_relaxation|squid_l1_relaxation]```  
+- to pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```  
+- to pick a subproblem method, use the argument: ```subproblem=[QP|LP|primal_dual_interior_point]```  

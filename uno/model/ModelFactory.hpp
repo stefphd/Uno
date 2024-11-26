@@ -7,13 +7,14 @@
 #include <memory>
 #include "Model.hpp"
 
-// forward declarations
-class Iterate;
-class Options;
+namespace uno {
+   // forward declaration
+   class Options;
 
-class ModelFactory {
-public:
-   static std::unique_ptr<Model> reformulate(std::unique_ptr<Model> model, Iterate& initial_iterate, const Options& options);
-};
+   class ModelFactory {
+   public:
+      static std::unique_ptr<Model> reformulate(std::unique_ptr<Model> model, const Options& options);
+   };
+} // namespace
 
 #endif // UNO_MODELFACTORY_H

@@ -8,118 +8,222 @@ endif()
 
 # define the project name
 project(Uno VERSION 1.0
-			DESCRIPTION "Uno (Unifying Nonlinear Optimization)"
-            LANGUAGES CXX C Fortran)
-
-# set C++17 and enable other languages
+        DESCRIPTION "Uno (Unifying Nonconvex Optimization)"
+        LANGUAGES CXX C Fortran)
 set(CMAKE_CXX_STANDARD 17)
-enable_language(CXX C Fortran)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion -Wmaybe-uninitialized")
+include(FortranCInterface)
+FortranCInterface_VERIFY(CXX)
+
+
+FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
+                            MACRO_NAMESPACE "FC_"
+                            SYMBOL_NAMESPACE "FC_")
+
+# directories
+set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
+
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
 set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmaybe-uninitialized")
+endif()
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders)
 
 # optional Gtest
 option(WITH_GTEST "Enable GoogleTest" OFF)
 message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 
-# directories
-set(DIRECTORIES uno)
 
 # source files
 file(GLOB UNO_SOURCE_FILES
-    uno/Uno.cpp
-    uno/ingredients/globalization_mechanism/*.cpp
-    uno/ingredients/globalization_strategy/*.cpp
-    uno/ingredients/globalization_strategy/filter_method/*.cpp
-    uno/ingredients/globalization_strategy/filter_method/filter/*.cpp
-    uno/ingredients/constraint_relaxation_strategy/*.cpp
-    uno/ingredients/subproblem/*.cpp
-    uno/ingredients/subproblem/inequality_constrained_methods/*.cpp
-    uno/ingredients/subproblem/interior_point_methods/*.cpp
-    uno/model/*.cpp
-    uno/optimization/*.cpp
-    uno/preprocessing/*.cpp
-    uno/tools/*.cpp
+   uno/Uno.cpp
+   uno/ingredients/constraint_relaxation_strategies/*.cpp
+   uno/ingredients/globalization_mechanisms/*.cpp
+   uno/ingredients/globalization_strategies/*.cpp
+   uno/ingredients/globalization_strategies/switching_methods/*.cpp
+   uno/ingredients/globalization_strategies/switching_methods/filter_methods/*.cpp
+   uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
+   uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
+   uno/ingredients/hessian_models/*.cpp
+   uno/ingredients/subproblems/*.cpp
+   uno/ingredients/subproblems/inequality_constrained_methods/*.cpp
+   uno/ingredients/subproblems/interior_point_methods/*.cpp
+   uno/model/*.cpp
+   uno/optimization/*.cpp
+   uno/options/*.cpp
+   uno/preprocessing/*.cpp
+   uno/reformulation/*.cpp
+   uno/solvers/*.cpp
+   uno/tools/*.cpp
 )
 
-# find libraries
+# unit test source files
+file(GLOB TESTS_UNO_SOURCE_FILES
+   unotest/unit_tests/unotest.cpp
+   unotest/unit_tests/CollectionAdapterTests.cpp
+   unotest/unit_tests/ConcatenationTests.cpp
+   unotest/unit_tests/COOSparseStorageTests.cpp
+   unotest/unit_tests/CSCSparseStorageTests.cpp
+   unotest/unit_tests/MatrixVectorProductTests.cpp
+   unotest/unit_tests/RangeTests.cpp
+   unotest/unit_tests/ScalarMultipleTests.cpp
+   unotest/unit_tests/SparseVectorTests.cpp
+   unotest/unit_tests/SumTests.cpp
+   unotest/unit_tests/VectorTests.cpp
+   unotest/unit_tests/VectorViewTests.cpp
+)
+
+#########################
+# external dependencies #
+#########################
 set(LIBRARIES "")
-set(OPTIONAL_LIBRARIES amplsolver ma57 metis bqpd CACHE STRING "Optional libraries")
-set(REQUIRED_LIBRARIES dl blas lapack)
 
-# automatic detection of optional libraries
-foreach(library_name IN LISTS OPTIONAL_LIBRARIES)
-	find_library(${library_name} ${library_name})
-	# ${library_name} is the name of the library(e.g. ma57)
-	# ${${library_name}} is the path of the library if found, otherwise ${library_name}-NOTFOUND
-	if(${${library_name}} STREQUAL "${library_name}-NOTFOUND")
-		message(WARNING "Optional library ${library_name} was not found. Use ccmake to configure its path.")
-	else()
-		# add the library
-		list(APPEND LIBRARIES ${${library_name}})
-		# add a preprocessor definition
-		string(TOUPPER ${library_name} library_name_upper)
-		add_definitions("-D HAS_${library_name_upper}")
-		# include the corresponding directory
-		get_filename_component(directory ${${library_name}} DIRECTORY)
-		include_directories(${directory})
-        message(STATUS "Library ${library_name} was found")
-        
-        # add the corresponding sources
-        if(${library_name} STREQUAL amplsolver)
-            list(APPEND UNO_SOURCE_FILES uno/interfaces/AMPL/AMPLModel.cpp)
-        elseif(${library_name} STREQUAL bqpd)
-            list(APPEND UNO_SOURCE_FILES uno/solvers/QP/BQPDSolver.cpp uno/solvers/QP/wdotd.f)
-        elseif(${library_name} STREQUAL ma57)
-            list(APPEND UNO_SOURCE_FILES uno/solvers/linear/MA57Solver.cpp)
-        endif()
-	endif()
-endforeach(library_name)
+# function that links an existing library to Uno
+function(link_to_uno library_name library_path)
+   # add the library
+   set(LIBRARIES ${LIBRARIES} ${library_path} PARENT_SCOPE)
+   # add a preprocessor definition
+   string(TOUPPER ${library_name} library_name_upper)
+   add_definitions("-D HAS_${library_name_upper}")
+   # include the corresponding directory
+   get_filename_component(directory ${library_path} DIRECTORY)
+   set(DIRECTORIES ${DIRECTORIES} ${directory} PARENT_SCOPE)
+   message(STATUS "Library ${library_name} was found.")
+endfunction()
 
-# automatic detection of required libraries
-foreach(library_name IN LISTS REQUIRED_LIBRARIES)
-	find_library(${library_name} ${library_name})
-	# ${library_name} is the name of the library(e.g. blas)
-	# ${${library_name}} is the path of the library if found, otherwise ${library_name}-NOTFOUND
-	if(${${library_name}} STREQUAL "${library_name}-NOTFOUND")
-		message(FATAL_ERROR "Required library ${library_name} was not found. Use ccmake to configure its path.")
-	else()
-		# add the library
-		list(APPEND LIBRARIES ${${library_name}})
-	endif()
-endforeach(library_name)
-find_package(OpenMP REQUIRED)
-list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
+# HSL or MA57
+find_library(HSL hsl)
+if(HSL)
+   link_to_uno(hsl ${HSL})
+else()
+   message(WARNING "Optional library HSL was not found.")
+   find_library(MA57 ma57)
+   if(MA57)
+      link_to_uno(ma57 ${MA57})
+   else()
+      message(WARNING "Optional library MA57 was not found.")
+   endif()
+endif()
+if(HSL OR MA57)
+   list(APPEND UNO_SOURCE_FILES uno/solvers/MA57/MA57Solver.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
+   
+   find_package(BLAS REQUIRED)
+   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+endif()
 
-#######
-# Uno #
-#######
+# METIS
+find_library(METIS metis)
+if(NOT METIS)
+   message(WARNING "Optional library METIS was not found.")
+else()
+   link_to_uno(metis ${METIS})
+endif()
+
+# BQPD
+find_library(BQPD bqpd)
+if(NOT BQPD)
+   message(WARNING "Optional library BQPD was not found.")
+else()
+   list(APPEND UNO_SOURCE_FILES uno/solvers/BQPD/BQPDSolver.cpp uno/solvers/BQPD/wdotd.f)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/BQPDSolverTests.cpp)
+   link_to_uno(bqpd ${BQPD})
+endif()
+
+# HiGHS
+find_package(HIGHS)
+if(NOT HIGHS)
+   message(WARNING "Optional library HiGHS was not found.")
+else()
+   list(APPEND UNO_SOURCE_FILES uno/solvers/HiGHS/HiGHSSolver.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
+   link_to_uno(highs ${HIGHS})
+   list(APPEND LIBRARIES highs::highs)
+endif()
+
+# MUMPS
+find_package(MUMPS)
+if(NOT MUMPS_LIBRARY)
+   message(WARNING "Optional library MUMPS was not found.")
+else()
+   list(APPEND UNO_SOURCE_FILES uno/solvers/MUMPS/MUMPSSolver.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MUMPSSolverTests.cpp)
+   list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
+   
+   list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
+
+   if(NOT MUMPS_MPISEQ_LIBRARY)
+      # parallel
+      add_definitions("-D MUMPS_PARALLEL")
+      find_package(MPI REQUIRED)
+      list(APPEND LIBRARIES MPI::MPI_CXX MPI::MPI_Fortran)
+      add_definitions("-D HAS_MPI")
+
+      find_package(BLACS REQUIRED)
+      list(APPEND LIBRARIES ${BLACS_LIBRARY})
+      list(APPEND DIRECTORIES ${BLACS_INCLUDE_DIRS})
+
+      find_package(ScaLAPACK REQUIRED)
+      list(APPEND LIBRARIES ${ScaLAPACK_LIBRARY})
+      list(APPEND DIRECTORIES ${ScaLAPACK_INCLUDE_DIRS})
+   else()
+      # sequential
+      add_definitions("-D MUMPS_SEQUENTIAL")
+      # link dummy parallel library (provided by MUMPS distribution)
+      link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
+   endif()
+   
+   find_package(METIS REQUIRED)
+   list(APPEND LIBRARIES ${METIS_LIBRARY})
+   list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
+   
+   find_package(BLAS REQUIRED)
+   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+   
+   find_package(OpenMP REQUIRED)
+   list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
+   
+   add_definitions("-D HAS_MUMPS")
+endif()
+
+###############
+# Uno library #
+###############
 add_library(uno STATIC ${UNO_SOURCE_FILES})
+set_property(TARGET uno PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(uno PUBLIC ${DIRECTORIES})
-
-# link the libraries
 target_link_libraries(uno PUBLIC ${LIBRARIES})
 
-# copy the option file
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+######################
+# optional AMPL main #
+######################
+find_library(AMPLSOLVER amplsolver)
+if(NOT AMPLSOLVER)
+   message(WARNING "Optional library amplsolver (ASL) was not found.")
+else()
+   message(STATUS "Library amplsolver was found.")
+   add_executable(uno_ampl bindings/AMPL/AMPLModel.cpp bindings/AMPL/AMPLUserCallbacks.cpp bindings/AMPL/uno_ampl.cpp)
+   
+   target_link_libraries(uno_ampl PUBLIC uno ${AMPLSOLVER} ${CMAKE_DL_LIBS})
+   add_definitions("-D HAS_AMPLSOLVER")
+   # include the corresponding directory
+   get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
+   include_directories(${directory})
+endif()
 
-#############
-# AMPL main #
-#############
-add_executable(uno_ampl uno/main.cpp)
-target_link_libraries(uno_ampl PUBLIC uno)
-
-#########################
-# GoogleTest unit tests #
-#########################
+##################################
+# optional GoogleTest unit tests #
+##################################
 if(WITH_GTEST)
-    find_package(GTest CONFIG REQUIRED)
-    if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
-        file(GLOB TESTS_UNO_SOURCE_FILES
-            unotest/*.cpp
-        )
-        add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
-        target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
-    endif()
+   find_package(GTest CONFIG REQUIRED)
+   if(NOT GTest_DIR)
+      message(WARNING "Optional library GTest was not found.")
+   else()
+      add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
+      target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
+   endif()
 endif()
