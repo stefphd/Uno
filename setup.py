@@ -205,7 +205,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name="unopy",
-    version="2.0.3",
+    version="2.1.0",
     description="Uno: a next-gen Lagrange-Newton solver for nonlinearly constrained optimization",
     long_description=long_description,
     long_description_content_type="text/markdown",
