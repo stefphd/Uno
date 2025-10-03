@@ -538,12 +538,6 @@ bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterat
    return false;
 }
 
-void uno_set_option(void* options, const char* option_name, const char* option_value) {
-   assert(options != nullptr);
-   uno::Options* uno_options = static_cast<uno::Options*>(options);
-   uno_options->set(option_name, option_value);
-}
-
 void* uno_create_solver() {
    // default options
    Options* options = new Options;
@@ -557,7 +551,7 @@ void* uno_create_solver() {
 
 void uno_set_solver_option(void* solver, const char* option_name, const char* option_value) {
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->options->set(option_name, option_value);
+   // uno_solver->options->set(option_name, option_value);
 }
 
 void uno_set_solver_preset(void* solver, const char* preset_name) {
