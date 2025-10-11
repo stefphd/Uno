@@ -98,11 +98,13 @@ namespace uno {
                   *this->globalization_strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
                   user_callbacks);
                GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
+               // user requested stop if return false
+               if (!user_callbacks.notify_new_primals(trial_iterate.primals) ||
+                   !user_callbacks.notify_new_multipliers(trial_iterate.multipliers)) {
+                     trial_iterate.status = SolutionStatus::USER_REQUESTED_STOP;
+               }
                termination = Uno::termination_criteria(trial_iterate.status, major_iterations, max_iterations,
                   timer.get_duration(), time_limit, optimization_status);
-               user_callbacks.notify_new_primals(trial_iterate.primals);
-               user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
-
                // the trial iterate becomes the current iterate for the next iteration
                std::swap(current_iterate, trial_iterate);
             }

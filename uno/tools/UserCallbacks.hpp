@@ -15,18 +15,20 @@ namespace uno {
       UserCallbacks() = default;
       virtual ~UserCallbacks() = default;
 
-      virtual void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) = 0;
-      virtual void notify_new_primals(const Vector<double>& primals) = 0;
-      virtual void notify_new_multipliers(const Multipliers& multipliers) = 0;
+      // return false to stop optimization
+      virtual bool notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) = 0;
+      virtual bool notify_new_primals(const Vector<double>& primals) = 0;
+      virtual bool notify_new_multipliers(const Multipliers& multipliers) = 0;
    };
 
    class NoUserCallbacks: public UserCallbacks {
    public:
       NoUserCallbacks(): UserCallbacks() { }
 
-      void notify_acceptable_iterate(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/, double /*primal_feasibility*/, double /*dual_feasibility*/, double /*complementarity*/) override { }
-      void notify_new_primals(const Vector<double>& /*primals*/) override { }
-      void notify_new_multipliers(const Multipliers& /*multipliers*/) override { }
+      // always return true to continue
+      bool notify_acceptable_iterate(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/, double /*primal_feasibility*/, double /*dual_feasibility*/, double /*complementarity*/) override { return true; }
+      bool notify_new_primals(const Vector<double>& /*primals*/) override { return true; }
+      bool notify_new_multipliers(const Multipliers& /*multipliers*/) override { return true; }
    };
 } // namespace
 

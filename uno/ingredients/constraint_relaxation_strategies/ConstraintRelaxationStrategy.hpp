@@ -95,6 +95,11 @@ namespace uno {
          return SolutionStatus::UNBOUNDED;
       }
 
+      // check user requested stop
+      if (iterate.status==SolutionStatus::USER_REQUESTED_STOP) {
+         return SolutionStatus::USER_REQUESTED_STOP;
+      }
+
       // test convergence wrt the tight tolerance
       const SolutionStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
          this->dual_tolerance);
